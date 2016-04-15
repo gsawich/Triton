@@ -6,6 +6,7 @@ import android.opengl.GLES20;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
 
 public class Billboard {
     private final int COORDS_PER_VERTEX = 3;
@@ -22,12 +23,15 @@ public class Billboard {
             + "  gl_FragColor = vColor;" + "}";
 
     private final FloatBuffer vertexBuffer;
+    private final ShortBuffer drawListBuffer;
     private float[] position = new float[3];
     private float[] color = new float[4];
     private float[] coordinates = {
-            0.0f, 0.5f, 0.0f,
-            -0.5f, -0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f};
+            -0.5f,  0.5f,  0.0f,
+            -0.5f, -0.5f,  0.0f,
+             0.5f, -0.5f,  0.0f,
+             0.5f,  0.5f,  0.0f};
+    private short drawOrder[] = { 0, 1, 2, 0, 2, 3 };
     private int positionHandler, colorHandler, matrixHandler;
     private int vertexCount;
     private int glProgram;
@@ -43,6 +47,22 @@ public class Billboard {
         color[2] = 200;
         color[3] = 1;
 
+        for (int i = 0; i < coordinates.length; i ++){
+            switch (i%COORDS_PER_VERTEX){
+                case (0):
+                    coordinates[i]+=position[0];
+                    break;
+                case (1):
+                    coordinates[i]+=position[1];
+                    break;
+                case (2):
+                    coordinates[i]+=position[2];
+                    break;
+                default:
+                    break;
+            }
+        }
+
         vertexCount = coordinates.length / COORDS_PER_VERTEX;
         // initialize vertex byte buffer for shape coordinates
         ByteBuffer bb = ByteBuffer.allocateDirect(
@@ -57,6 +77,15 @@ public class Billboard {
         vertexBuffer.put(coordinates);
         // set the buffer to read the first coordinate
         vertexBuffer.position(0);
+
+        ByteBuffer dlb = ByteBuffer.allocateDirect(
+                // (# of coordinate values * 2 bytes per short)
+                drawOrder.length * 2);
+        dlb.order(ByteOrder.nativeOrder());
+        drawListBuffer = dlb.asShortBuffer();
+        drawListBuffer.put(drawOrder);
+        drawListBuffer.position(0);
+
 
         // prepare shaders and OpenGL program
         int vertexShader = GraphicsRenderer.loadShader(GLES20.GL_VERTEX_SHADER,
@@ -105,10 +134,22 @@ public class Billboard {
             GLES20.glUniformMatrix4fv(matrixHandler, 1, false, mvpMatrix, 0);
 
             // Draw the triangle
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, drawOrder.length, GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
         }
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(positionHandler);
+    }
+
+    public float getX() {
+        return position[0];
+    }
+
+    public float getY() {
+        return position[1];
+    }
+
+    public float getZ() {
+        return position[2];
     }
 }
