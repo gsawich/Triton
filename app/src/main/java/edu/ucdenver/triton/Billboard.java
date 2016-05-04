@@ -1,6 +1,7 @@
 package edu.ucdenver.triton;
 
 
+import android.graphics.PointF;
 import android.opengl.GLES20;
 
 import java.nio.ByteBuffer;
@@ -36,8 +37,10 @@ public class Billboard {
     private int vertexCount;
     private int glProgram;
     private boolean canDraw;
+    private float size;
 
-    public Billboard(float x, float y, float z){
+    public Billboard(float x, float y, float z, float size){
+        this.size = size;
         position[0] = x;
         position[1] = y;
         position[2] = z;
@@ -48,19 +51,7 @@ public class Billboard {
         color[3] = 1;
 
         for (int i = 0; i < coordinates.length; i ++){
-            switch (i%COORDS_PER_VERTEX){
-                case (0):
-                    coordinates[i]+=position[0];
-                    break;
-                case (1):
-                    coordinates[i]+=position[1];
-                    break;
-                case (2):
-                    coordinates[i]+=position[2];
-                    break;
-                default:
-                    break;
-            }
+            coordinates[i] *= size;
         }
 
         vertexCount = coordinates.length / COORDS_PER_VERTEX;
@@ -107,6 +98,31 @@ public class Billboard {
     public void draw(float[] mvpMatrix) {
 
         if (canDraw) {
+            float[] drawCoords = new float[coordinates.length];
+            for (int j = 0; j < coordinates.length; j++) {
+                drawCoords[j] = coordinates[j];
+            }
+            for (int i = 0; i < coordinates.length; i ++){
+                switch (i%COORDS_PER_VERTEX){
+                    case (0):
+                        drawCoords[i] = position[0] + coordinates[i];
+                        break;
+                    case (1):
+                        drawCoords[i] = position[1] + coordinates[i];
+                        break;
+                    case (2):
+                        drawCoords[i] = position[2] + coordinates[i];
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // add the coordinates to the FloatBuffer
+            vertexBuffer.put(drawCoords);
+            // set the buffer to read the first coordinate
+            vertexBuffer.position(0);
+
             // Add program to OpenGL environment
             GLES20.glUseProgram(glProgram);
 
@@ -139,6 +155,14 @@ public class Billboard {
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(positionHandler);
+    }
+
+    public void setCoords(Planet p) {
+        //PointF location = p.getCurrentLocation();
+        if (position[0] != p.currentLocation.x || position[1] != p.currentLocation.y) {
+            position[0] = p.currentLocation.x;
+            position[1] = p.currentLocation.y;
+        }
     }
 
     public float getX() {

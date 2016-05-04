@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Triton</string>
+    <string name="speed_display">Speed: %1$d</string>
+    <string name="rewind_content">Rewind</string>
+    <string name="pause_content">Pause</string>
+    <string name="play_content">Play</string>
+    <string name="forward_content">Forward</string>
 </resources>

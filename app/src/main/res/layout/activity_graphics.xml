@@ -1,16 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="edu.ucdenver.triton.GraphicsActivity">
-
-    <TextView
-        android:layout_width="wrap_content"
+    <edu.ucdenver.triton.GraphicsSurface
+        android:id="@+id/glsurface"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
-</RelativeLayout>
+        android:layout_width="wrap_content"/>
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/control_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+        <ZoomButton
+            android:id="@+id/zoom_out"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:alpha="1"/>
+        <ZoomButton
+            android:id="@+id/zoom_in"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="1"
+            android:layout_below="@+id/zoom_out"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            android:gravity="bottom|center_horizontal">
+            <TextView
+                android:id="@+id/date_display"
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:textSize="30sp"
+                android:textColor="#FFF"
+                android:alpha="1"
+                android:layout_weight="15" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="5">
+                <TextView
+                    android:id="@+id/speed_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:alpha="1"
+                    android:theme="@style/AppTheme" />
+                <SeekBar
+                    android:id="@+id/speed_bar"
+                    android:layout_width="90dp"
+                    android:layout_height="wrap_content"
+                    android:alpha="1"
+                    android:progress="0"
+                    android:visibility="visible"
+                    android:max="2"
+                    android:theme="@style/AppTheme"/>
+            </LinearLayout>
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="5" />
+            <ImageButton
+                android:id="@+id/rewind"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="1"
+                android:contentDescription="@string/rewind_content"
+                android:src="@drawable/ic_rewind"
+                android:layout_weight="1" />
+            <ImageButton
+                android:id="@+id/pause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/pause_content"
+                android:alpha="1"
+                android:src="@drawable/ic_pause"
+                android:layout_weight="1" />
+            <ImageButton
+                android:id="@+id/play"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/play_content"
+                android:alpha="1"
+                android:src="@drawable/ic_play"
+                android:layout_weight="1" />
+            <ImageButton
+                android:id="@+id/forward"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/forward_content"
+                android:alpha="1"
+                android:src="@drawable/ic_forward"
+                android:layout_weight="1" />
+        </LinearLayout>
+    </RelativeLayout>
+</FrameLayout>
