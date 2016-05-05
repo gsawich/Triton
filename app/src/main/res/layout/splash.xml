@@ -36,7 +36,7 @@
         android:id="@+id/launchButton"
         android:layout_below="@+id/switch3D"
         android:layout_centerHorizontal="true"
-        android:background="#62c800ff"
+        android:background="#000"
         android:textColor="#ffffff"
-        android:alpha="0.5" />
+        android:alpha="0.8" />
 </RelativeLayout>

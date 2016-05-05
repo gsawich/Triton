@@ -1,8 +1,10 @@
 package edu.ucdenver.triton;
 
 
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -30,8 +32,8 @@ public class Billboard {
     private float[] coordinates = {
             -0.5f,  0.5f,  0.0f,
             -0.5f, -0.5f,  0.0f,
-             0.5f, -0.5f,  0.0f,
-             0.5f,  0.5f,  0.0f};
+            0.5f, -0.5f,  0.0f,
+            0.5f,  0.5f,  0.0f};
     private short drawOrder[] = { 0, 1, 2, 0, 2, 3 };
     private int positionHandler, colorHandler, matrixHandler;
     private int vertexCount;
@@ -39,15 +41,15 @@ public class Billboard {
     private boolean canDraw;
     private float size;
 
-    public Billboard(float x, float y, float z, float size){
+    public Billboard(float x, float y, float z, float size, int col){
         this.size = size;
         position[0] = x;
         position[1] = y;
         position[2] = z;
 
-        color[0] = 100;
-        color[1] = 0;
-        color[2] = 200;
+        color[0] = Color.red(col)/255.0f;
+        color[1] = Color.green(col)/255.0f;
+        color[2] = Color.blue(col)/255.0f;
         color[3] = 1;
 
         for (int i = 0; i < coordinates.length; i ++){

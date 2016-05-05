@@ -489,7 +489,6 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
         c.drawBitmap(sol, sun.x -(solW/2), sun.y - (solH/2), null);
 
         //Draw Planets
-        planet.setColor(Color.GREEN);
         planet.setStyle(Paint.Style.FILL_AND_STROKE);
         //int k = 2;
         for (int i = 0; i < PLANETNUM; ++i) {
@@ -507,7 +506,8 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
             else if (y > sHeight) {
                 y = sHeight-3.0f;
             }
-            c.drawCircle(x, y, 3, planet);
+            planet.setColor(planetArray[i].getColor());
+            c.drawCircle(x, y, planetArray[i].getSize()*3, planet);
             /*c.drawBitmap(bArr[i+1],(planetArray[i].currentLocation.x)-(w_hHolder[k]/2),(planetArray[i].currentLocation.y)-(w_hHolder[k+1]/2),null);
             k += 2;*/
         }

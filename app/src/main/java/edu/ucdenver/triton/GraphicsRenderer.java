@@ -2,11 +2,13 @@ package edu.ucdenver.triton;
 
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.widget.TextView;
 
 import java.text.DateFormat;
@@ -30,6 +32,7 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
     public double currentDate;
     public Calendar cal;
     public int speed;
+    public float friction;
     public boolean isPaused;
 
     private Planet[] planetArray = new Planet[N];
@@ -67,14 +70,15 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
         sun = new PointF();
         scaleFactor = 1;
         currentDate = getJulianCalDay();
-        speed = 10;
+        speed = 1;
+        friction = 0.01f;
 
         for (int i = 0; i < N; i++) {
             planetArray[i] = new Planet(i, sun, scaleFactor, 5);
-            planetBillboardArray[i] = new Billboard(1, 0, 0, 1+i*i);
+            planetBillboardArray[i] = new Billboard(1, 0, 0, (planetArray[i].getSize()*5.0f), planetArray[i].getColor());
         }
 
-        sunBillboard = new Billboard(1,0,0, 5.0f);
+        sunBillboard = new Billboard(1,0,0, 5.0f, Color.YELLOW);
 
         //Set background color
         GLES20.glClearColor(0.001f, 0.0f, 0.01f, 1.0f);
@@ -97,10 +101,19 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
         //Draw Background
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
+        camX += camXd;
+        camY += camYd;
+        camZ += camZd;
+
+        camXd -= friction;
+        camYd -= friction;
+        camZd -= friction;
+
+        if (camXd < 0) camXd = 0;
+        if (camYd < 0) camYd = 0;
+        if (camZd < 0) camZd = 0;
+
         if (!isPaused) {
-            camX += camXd;
-            camY += camYd;
-            camZ += camZd;
             cal.add(Calendar.DAY_OF_YEAR, speed);
             currentDate = getJulianCalDay();
             new UpdateDate().execute(cal);
@@ -123,7 +136,9 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
 
             // Combine the rotation matrix with the projection and camera view
             Matrix.multiplyMM(mvpMatrix[i], 0, rotMatrix[i], 0, mvpMatrix[i], 0);
-            Matrix.rotateM(mvpMatrix[i], 0, 90, 1.0f, 0.0f, 0.0f);
+            float rotAngle = (float) (90+((180/Math.PI) * Math.atan2(Double.parseDouble(Float.toString(camZ-curBB.getZ())), Double.parseDouble(Float.toString(camY-curBB.getY())))));
+            Log.i("rotation", planetArray[i].getName() + " : " + rotAngle);
+            Matrix.rotateM(mvpMatrix[i], 0, rotAngle, 1.0f, 0.0f, 0.0f);
             // Draw billboard
             planetBillboardArray[i].draw(mvpMatrix[i]);
         }
@@ -181,6 +196,14 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
 
     public void setText(TextView t) {
         date = t;
+    }
+
+    public void setScale(float scale) {
+        //for (Planet p: planetArray) p.setScale(scale);
+        camYd += scale - 1;
+        camY *= scale;
+        if (camY < 20) { camY = 20; }
+        if (camY > 5000) { camY = 5000; }
     }
 
     private class UpdateDate extends AsyncTask<Calendar, Void, String> {

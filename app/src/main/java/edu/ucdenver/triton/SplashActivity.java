@@ -1,11 +1,13 @@
 package edu.ucdenver.triton;
 
 
+import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -31,13 +33,17 @@ public class SplashActivity extends Activity{
 
         Animation slowFade = AnimationUtils.loadAnimation(getBaseContext(), android.R.anim.fade_in);
         Animation fastFade = AnimationUtils.loadAnimation(getBaseContext(), android.R.anim.fade_in);
-
-        slowFade.setDuration(4000);
+        Animation extraSlowFade = AnimationUtils.loadAnimation(getBaseContext(), android.R.anim.fade_in);
+        slowFade.setDuration(2000);
+        slowFade.setStartOffset(1000);
+        extraSlowFade.setDuration(3000);
+        extraSlowFade.setStartOffset(1500);
         fastFade.setDuration(2000);
 
-        text.startAnimation(fastFade);
-        switch3d.startAnimation(slowFade);
-        button.startAnimation(slowFade);
+        text.setAnimation(fastFade);
+        switch3d.setAnimation(slowFade);
+        button.setAnimation(extraSlowFade);
+
 
         button.setOnClickListener(new View.OnClickListener() {
             Intent i;

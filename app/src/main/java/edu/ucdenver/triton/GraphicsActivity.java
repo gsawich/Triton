@@ -60,7 +60,7 @@ public class GraphicsActivity extends FragmentActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 speedText.setText(getResources().getString(R.string.speed_display, progress + 1));
-                view3d.speed((1+progress)*10);
+                view3d.speed((1+progress)*(progress+1));
             }
 
             @Override

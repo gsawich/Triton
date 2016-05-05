@@ -2,7 +2,10 @@ package edu.ucdenver.triton;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+
+import android.graphics.Color;
 import android.graphics.PointF;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 public class Planet {
@@ -16,7 +19,9 @@ public class Planet {
     double distanceScaleFactor;
     double eccentricity;
     double period;
+    float size;
     Calendar currentDate;
+    int color;
 
     //Perturbation constants for Jupiter, Saturn, Uranus, Neptune, & Pluto
     static final double b[] = {-0.00012452, 0.00025899, 0.00058331, -0.00041348, -0.01262724};
@@ -32,7 +37,9 @@ public class Planet {
     private static final double periodArray[] = {0.241, 0.615, 1.0, 1.881, 11.86, 29.46, 84.01, 164.8, 248.5, 3.61, 2.76, 75.32}; //Years
     private static final double thetaArray[] = {5.1, 1.4, 1.2, 1.6, 1.2, 4.4, 1.2, 2.0, 5.6, 3.1, 3.1, 3.1};
     private static final float orientDegArray[] = {0f, 0.0f, 0f, 100f, 0f, 0f, 0f, 0f, 200f, 70f, -45f, 115f};
-
+    private static final float sizeArray[] = {0.38f, 0.95f, 1.0f, 0.53f, 11.2f, 9.45f, 4.0f, 3.88f};
+    private static final int colorArray[] = { Color.parseColor("#D4B7B6"), Color.parseColor("#EDB753"), Color.parseColor("#4768B5"), Color.parseColor("#B86E40"),
+            Color.parseColor("#D93600"), Color.parseColor("#FFEB99"), Color.parseColor("#A5D2E8"), Color.parseColor("#7A94C4") };
     final double precision = 10E-6;
 
     //Calculated
@@ -65,7 +72,8 @@ public class Planet {
         this.eccentricity = eccentricityArray[ID];
         currentLocation = new PointF(0.0f,0.0f);
         currentDate = GregorianCalendar.getInstance();
-
+        size = sizeArray[ID];
+        color= colorArray[ID];
     }
 
     //Ecliptic latitude/longitude based on time
@@ -191,4 +199,8 @@ public class Planet {
     public double getScale(){
         return scale;
     }
+
+    public float getSize() { return size; }
+
+    public int getColor() {return color; }
 }
