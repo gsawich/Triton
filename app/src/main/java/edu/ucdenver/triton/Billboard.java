@@ -157,11 +157,10 @@ public class Billboard {
         GLES20.glDisableVertexAttribArray(positionHandler);
     }
 
-    public void setCoords(Planet p) {
-        //PointF location = p.getCurrentLocation();
-        if (position[0] != p.currentLocation.x || position[1] != p.currentLocation.y) {
-            position[0] = p.currentLocation.x;
-            position[1] = p.currentLocation.y;
+    public void setCoords(PointF p) {
+        if (position[0] != p.x || position[1] != p.y) {
+            position[0] = p.x;
+            position[1] = p.y;
         }
     }
 

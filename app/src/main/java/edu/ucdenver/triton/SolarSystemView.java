@@ -10,11 +10,13 @@ import android.graphics.PointF;
 import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Stack;
@@ -28,18 +30,20 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
     int sWidth;
     int sHeight;
     private Context ctx;
-    //private DisplayMetrics dm;
     private final int PLANETNUM = 8;
     private ExecutorService pool;
-
     private Paint planet;
     private PointF center;
-    private double scaleFactor;
+    private static final double rMin[] = {0.307, 0.718, 0.983, 1.382, 4.951, 9.024, 18.33, 29.81, 29.656};   //AU
+    private static final double rMax[] = {0.467, 0.728, 1.017, 1.666, 5.455, 10.086, 20.11, 30.33, 49.319};   //AU
+    private static final String planetName[] = {"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"};
+    private static final double eccentricityArr[] = {0.206, 0.007, 0.017, 0.093, 0.048, 0.056, 0.047, 0.009, 0.248, 0.617, 0.529, 0.967};   //Dimensonless
+    private static final double period[] = {0.241, 0.615, 1.0, 1.881, 11.86, 29.46, 84.01,164.8, 248.5, 3.61, 2.76, 75.32}; //Years
     private Planet planetArray [] = new Planet[PLANETNUM];
 
-    //public int frameCount = 0;
     TextView dateDisplay;
     Calendar cal;
+
     PlanetPosRun[] posRunArr;
     PlanetInitThread[] pInitArr;
 
@@ -57,13 +61,13 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
 
     //Scale tools
     private ScaleGestureDetector scaleDetector;
-    private float scaleFac = 1.f;
+    private float scaleFactor = 1.0f;
     PointF sun;
-
     //Animation
-    static final double MIN_FPS = 10;
-    static final double MED_FPS = 30;
-    static final double MAX_FPS = 60;
+    static final double MIN_FPS = 30;
+    static final double MED_FPS = 90;
+    static final double MAX_FPS = 360;
+    public int speed;
     double FRAME_TIME_SECONDS, FRAME_TIME_MILLISECONDS;
     double tPrevFrame, tEOF, deltaT;
     private double currentDay;
@@ -78,8 +82,7 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
         init(context);
     }
 
-    public SolarSystemView(Context context, AttributeSet attrs)
-    {
+    public SolarSystemView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
@@ -87,10 +90,14 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
         super(context, attrs, defStyle);
         init(context);
     }
-/***********************************************************************************************************************************************/
+
+//***********************************************************************************************************************************************
 //Nested Classes
 
     private class UpdateDate extends AsyncTask<Calendar, Void, String> {
+
+        private SimpleDateFormat formatDate = new SimpleDateFormat("yyyy:MM:dd");
+
         @Override
         protected String doInBackground(Calendar... params) {
             String era;
@@ -99,8 +106,12 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
             } else {
                 era = "BC";
             }
-            String formatDate = String.valueOf(cal.get(GregorianCalendar.MONTH) + 1) + "-" + String.valueOf(cal.get(GregorianCalendar.DAY_OF_MONTH)) + "-" + String.valueOf(cal.get(GregorianCalendar.YEAR) + "-" + era);
-            return formatDate;
+            formatDate.setCalendar(cal);
+
+            /*formatDate = String.valueOf(cal.get(GregorianCalendar.MONTH) + 1)
+                    + "-" + String.valueOf(cal.get(GregorianCalendar.DAY_OF_MONTH))
+                    + "-" + String.valueOf(cal.get(GregorianCalendar.YEAR) + "-" + era);*/
+            return formatDate.format(cal.getTime());
         }
 
         @Override
@@ -114,7 +125,7 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
 
         private SurfaceHolder surfaceHolder;
         private SolarSystemView ssv;
-        private Object lock;
+        private Object lock;   //Dummy lock object
         private boolean paused, finished;
 
         public DrawThread(SurfaceHolder surfaceHolder, SolarSystemView gview) {
@@ -169,7 +180,7 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
                         surfaceHolder.unlockCanvasAndPost(c);
                     }
                 }
-                cal.add(GregorianCalendar.DAY_OF_MONTH, FORWARD_BACKWARD_ONE_DAY);
+                cal.add(GregorianCalendar.DAY_OF_MONTH, FORWARD_BACKWARD_ONE_DAY*speed);
                 currentDay = getJulianCalDay();
                 tEOF = System.currentTimeMillis();
                 deltaT = tEOF - tPrevFrame;
@@ -206,7 +217,6 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
         }
     }
 
-
     private class PlanetInitThread implements Runnable {
         int planetID;
 
@@ -216,14 +226,50 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
 
         @Override
         public void run() {
-            planetArray[planetID] = new Planet(planetID, sun, scaleFactor);
-            //*Note might need to make sun obj threadsafe.
+            planetArray[planetID] = new Planet(planetID, sun, 1.0f, solW);            //*Note might need to make sun obj threadsafe.
         }
     }
+
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+
+        float span;
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector){
+            span = detector.getCurrentSpan();
+            return true;
+        }
+
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            //scaleFactor = detector.getScaleFactor();
+            scaleFactor *= 1+((1-(span/detector.getCurrentSpan() ))/10);
+            if (scaleFactor < 0.01) { scaleFactor = 0.01f; }
+            if (scaleFactor > 2) { scaleFactor = 2; }
+            Log.i("ScaleFactor", "Scale Factor: " + scaleFactor );
+            for (Planet p: planetArray) p.setScale(scaleFactor);
+            return true;
+        }
+    }
+
 //************************************************************************************************************************************************************************************
 
 
-
+    public boolean onTouchEvent(MotionEvent event) {
+        scaleDetector.onTouchEvent(event);
+        return true;
+    }
+    /*
+    public void incZoom() {
+        scaleFac += 0.1f;
+        Planet.setZoomFac(scaleFac);
+    }
+    public void decZoom() {
+        if (scaleFac - 0.1f > 0) {
+            scaleFac -= 0.1f;
+            Planet.setZoomFac(scaleFac);
+        }
+    }
+    */
     public void setTextView(TextView tview) {
         dateDisplay = tview;
     }
@@ -267,14 +313,15 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
         thread.onResume();
         Log.i("DrawThread", "Draw Thread State: " + thread.getState() );
     }
+
     public void init(Context context) {
 
         ctx = context;
         cal = GregorianCalendar.getInstance();
-        //for loops
         sol = BitmapFactory.decodeResource(getResources(),R.drawable.sol);
         solW = sol.getWidth();
         solH = sol.getHeight();
+        speed = 1; //One month per second
         /*bArr = new Bitmap[9];
         w_hHolder = new int[18];
 
@@ -356,16 +403,13 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
         }*/
 
         currentDay = getJulianCalDay();
-        //set up the scaler
-        //scaleDetector = new ScaleGestureDetector(ctx,new ScaleListener());
 
         //floatArrHolder = new Stack();
 
-        //pool = Executors.newFixedThreadPool(POOLSIZE);
+        //pool = Executors.newFixedThreadPool(PLANETNUM);
 
-        //make thread pool executor
+        scaleDetector = new ScaleGestureDetector(ctx, new ScaleListener());
         posRunArr = new PlanetPosRun[PLANETNUM];
-        //initalize the runnables
         for(int i = 0; i < PLANETNUM; ++i){
             posRunArr[i] = new PlanetPosRun(i);
         }
@@ -389,36 +433,37 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
         sHeight = h;
         center = new PointF();
         sun = new PointF();
-        center.x = w/2;
-        center.y = h/2;
+        center.x = w / 2;
+        center.y = h / 2;
         //Arbitrary sun position
-        sun.x = w/2;
-        sun.y = h/2;
+        sun.x = w / 2;
+        sun.y = h / 2;
         //Scaling needs revision
-        scaleFactor= Math.min(center.x, center.y)/3;
-        //scaleFactor = 1;
+        //scaleFactor = Math.min(center.x, center.y) / 2;
         pool = Executors.newFixedThreadPool(PLANETNUM);
-        for(int i = 0; i < PLANETNUM; ++i) {
+        scaleFactor = Math.max(center.x, center.y)/8;
+        pool = Executors.newFixedThreadPool(PLANETNUM);
+        for (int i = 0; i < PLANETNUM; ++i) {
             pool.execute(pInitArr[i]);
         }
         pool.shutdown();
         try {
             pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     //ToDo: Make thread safe for changing speed
-    public void setSpeed(int choice) {
-        switch (choice) {
-            //Increment by one day
+    public void setSpeed(int s) {
+        speed = s;
+        /*switch (choice) {
+            //Increment by one month
             case 0:
                 FRAME_TIME_SECONDS = 1/MIN_FPS;
                 FRAME_TIME_MILLISECONDS = FRAME_TIME_SECONDS * 1000;
                 break;
-            //Increment by one month
+            //Increment by three months
             case 1:
                 FRAME_TIME_SECONDS = 1/MED_FPS;
                 FRAME_TIME_MILLISECONDS = FRAME_TIME_SECONDS * 1000;
@@ -428,21 +473,19 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
                 FRAME_TIME_SECONDS = 1/MAX_FPS;
                 FRAME_TIME_MILLISECONDS = FRAME_TIME_SECONDS * 1000;
                 break;
-        }
+        }*/
     }
 
     @Override
     public void draw(Canvas c) {
         super.draw(c);
         c.save();
-        c.scale(scaleFac, scaleFac, sun.x, sun.y);
         c.drawColor(Color.BLACK);
         //Draw Sun
         /*planet.setStyle(Paint.Style.FILL_AND_STROKE);
         planet.setColor(Color.YELLOW);
         c.drawCircle(sun.x, sun.y, 4, planet);*/
         //c.drawBitmap(bArr[0],sun.x-(w_hHolder[0]/2),sun.y-(w_hHolder[1]/2),null);
-        //ToDo: Check radius
         c.drawBitmap(sol, sun.x -(solW/2), sun.y - (solH/2), null);
 
         //Draw Planets
@@ -450,7 +493,21 @@ public class SolarSystemView extends SurfaceView implements SurfaceHolder.Callba
         planet.setStyle(Paint.Style.FILL_AND_STROKE);
         //int k = 2;
         for (int i = 0; i < PLANETNUM; ++i) {
-            c.drawCircle(planetArray[i].currentLocation.x, planetArray[i].currentLocation.y, 3, planet);
+            float x = planetArray[i].currentLocation.x;
+            float y = planetArray[i].currentLocation.y;
+            if(x < 0.0f) {
+                x = 3.0f;
+            }
+            else if (x > sWidth) {
+                x = sWidth-3.0f;
+            }
+            if(y < 0.0f) {
+                y = 3.0f;
+            }
+            else if (y > sHeight) {
+                y = sHeight-3.0f;
+            }
+            c.drawCircle(x, y, 3, planet);
             /*c.drawBitmap(bArr[i+1],(planetArray[i].currentLocation.x)-(w_hHolder[k]/2),(planetArray[i].currentLocation.y)-(w_hHolder[k+1]/2),null);
             k += 2;*/
         }

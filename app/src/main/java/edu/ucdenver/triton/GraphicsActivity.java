@@ -45,6 +45,7 @@ public class GraphicsActivity extends FragmentActivity {
 
         view3d = (GraphicsSurface)findViewById(R.id.glsurface);
         dd = (TextView) findViewById(R.id.date_display);
+        view3d.setText(dd);
         zoomOut = (ZoomButton) findViewById(R.id.zoom_out);
         zoomIn = (ZoomButton) findViewById(R.id.zoom_in);
         speed = (SeekBar) findViewById(R.id.speed_bar);
@@ -54,23 +55,12 @@ public class GraphicsActivity extends FragmentActivity {
         pause = (ImageButton) findViewById(R.id.pause);
         play = (ImageButton) findViewById(R.id.play);
         forward = (ImageButton) findViewById(R.id.forward);
-        zoomOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
 
-            }
-        });
-        zoomIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
         speed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 speedText.setText(getResources().getString(R.string.speed_display, progress + 1));
-                view3d.speed(progress*10);
+                view3d.speed((1+progress)*10);
             }
 
             @Override
@@ -84,7 +74,7 @@ public class GraphicsActivity extends FragmentActivity {
         rewind.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                view3d.forward();
+                view3d.reverse();
             }
         });
         play.setOnClickListener(new View.OnClickListener() {
@@ -102,7 +92,7 @@ public class GraphicsActivity extends FragmentActivity {
         forward.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                view3d.reverse();
+                view3d.forward();
             }
         });
 

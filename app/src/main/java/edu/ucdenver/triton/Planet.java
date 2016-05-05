@@ -1,24 +1,16 @@
 package edu.ucdenver.triton;
-/*
-    Shawn Johnson
-    CSCI 3320 - Spring 2016
-    Android Project
- */
 
-import android.graphics.PointF;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-
 import android.graphics.PointF;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+import android.util.Log;
 
 public class Planet {
 
-    public PointF sun;
-    public String planetName;
-    public double scaleFactor;
-    public PointF currentLocation;
+    PointF sun;
+    String planetName;
+    double scaleFactor;
+    PointF currentLocation;
     double semiMajorAxis;   //a
     double semiMinorAxis;   //b
     double distanceScaleFactor;
@@ -57,38 +49,28 @@ public class Planet {
     double deltaM;
     double ML;
     double x0, y0, x, y;
-    double scale;
+    float scale;
+    double solSize;
 
-    public Planet(int ID, PointF sunP, double scale) {
+    public Planet(int ID, PointF sunP, float scale, double sSize) {
         this.scale = scale;
         planetName = planetNameArray[ID];
         sun = new PointF(sunP.x, sunP.y);
         period = periodArray[ID] * 365.25;    //Convert to days
-        scaleFactor = scale;
+        scaleFactor = scale + sSize*2;
         semiMajorAxis = (rMinArray[ID] + rMaxArray[ID]) / 2;
+        Log.i("Constructor", "Sun Size: " + solSize);
         semiMinorAxis = semiMajorAxis * Math.sqrt(1 - Math.pow(eccentricity, 2));
         distanceScaleFactor = scaleFactor * semiMajorAxis * (1 - Math.pow(eccentricity, 2));
         this.eccentricity = eccentricityArray[ID];
         currentLocation = new PointF(0.0f,0.0f);
         currentDate = GregorianCalendar.getInstance();
-    }
 
-/*
-    public void setCurrentDate(int year, int month, int day) {
-        currentDate.set(year, month, day);
-        computeEffectiveDateTime();
     }
-    public void computeEffectiveDateTime() {
-        d = 367*currentDate.get(GregorianCalendar.YEAR) - (7*(currentDate.get(GregorianCalendar.YEAR)+(currentDate.get(GregorianCalendar.MONTH)+9)/12) / 4) + 275*currentDate.get(GregorianCalendar.MONTH)/9 + currentDate.get(GregorianCalendar.DAY_OF_MONTH) - 730530;
-        System.out.println("Julian Date: " + d);
-        calculatePosition();
-    }
-    */
 
     //Ecliptic latitude/longitude based on time
     public void calculatePosition(double d) {
         //computeEffectiveDateTime();
-
         //Degrees
         double E, E0, E1, xv, yv, v, r;
         switch(this.planetName) {
@@ -169,7 +151,6 @@ public class Planet {
         if(e > 0.06) {
             E0 = E;
             E1 = 0.0;
-            //TODO: Change to Newton's Method
             for (int i = 0; i < 50; ++i) {
                 E1 = E0 - ( E0 - e*(180/Math.PI) * Math.sin(Math.toRadians(E0)) - M) / ( 1 - e * Math.cos(Math.toRadians(E0)));
             }
@@ -179,7 +160,7 @@ public class Planet {
         xv = a * (Math.cos(Math.toRadians(E)) - e); //r * Math.cos(v)
         yv =  a * (Math.sqrt(1.0 - e*e) * Math.sin(Math.toRadians(E))); //r * sin(v);
         v = Math.atan2(yv, xv);
-        r = Math.sqrt(xv*xv + yv*yv);
+        r = Math.sqrt(xv*xv + yv*yv)*scale;
         if (planetName.equals("Earth")) {
             currentLocation.x = (float) -(r * (Math.cos(Math.toRadians(N)) * Math.cos(v + Math.toRadians(w)) - Math.sin(Math.toRadians(N)) * Math.sin(v + Math.toRadians(w)) * Math.cos(Math.toRadians(i))));
             currentLocation.y = (float) -(r * (Math.sin(Math.toRadians(N)) * Math.cos(v + Math.toRadians(w)) + Math.cos(Math.toRadians(N)) * Math.sin(v + Math.toRadians(w)) * Math.cos(Math.toRadians(i))));
@@ -188,14 +169,12 @@ public class Planet {
             currentLocation.x = (float) (r * (Math.cos(Math.toRadians(N)) * Math.cos(v + Math.toRadians(w)) - Math.sin(Math.toRadians(N)) * Math.sin(v + Math.toRadians(w)) * Math.cos(Math.toRadians(i))));
             currentLocation.y = (float) (r * (Math.sin(Math.toRadians(N)) * Math.cos(v + Math.toRadians(w)) + Math.cos(Math.toRadians(N)) * Math.sin(v + Math.toRadians(w)) * Math.cos(Math.toRadians(i))));
         }
-        //System.out.println(planetName + ":  X: " + currentLocation.x + "    Y: " + currentLocation.y + "    Scale Factor: " + scaleFactor + "    Distance Scale Factor: " + distanceScaleFactor);
-        currentLocation.x = sun.x + (float) (currentLocation.x * distanceScaleFactor * scale);
-        currentLocation.y = sun.y - (float) (currentLocation.y * distanceScaleFactor * scale);
-        //System.out.println(planetName + ":  X: " + currentLocation.x + "    Y: " + currentLocation.y + "    Scale Factor: " + scaleFactor + "    Distance Scale Factor: " + distanceScaleFactor);
-
+        currentLocation.x = sun.x + (float) (currentLocation.x * distanceScaleFactor);
+        currentLocation.y = sun.y - (float) (currentLocation.y * distanceScaleFactor);
     }
-
-    public PointF getCurrentLocation() { return currentLocation; }
+    public PointF getCurrentLocation() {
+        return currentLocation;
+    }
 
     public String  getName() {
         return planetName;
@@ -205,13 +184,11 @@ public class Planet {
         return period;
     }
 
-    public void setScale(double scale) {
-        this.scale = scale;
+    public void setScale(float s) {
+        scale = s;
     }
 
     public double getScale(){
         return scale;
     }
-
 }
-

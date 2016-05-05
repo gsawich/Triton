@@ -3,6 +3,7 @@ package edu.ucdenver.triton;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
+import android.widget.TextView;
 
 public class GraphicsSurface extends GLSurfaceView {
     private final GraphicsRenderer glRenderer;
@@ -12,6 +13,10 @@ public class GraphicsSurface extends GLSurfaceView {
         setEGLContextClientVersion(2);
         glRenderer = new GraphicsRenderer(context);
         setRenderer(glRenderer);
+    }
+
+    public void setText(TextView text) {
+        glRenderer.setText(text);
     }
 
     public void speed(int speed) {

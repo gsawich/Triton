@@ -6,7 +6,11 @@ import android.graphics.PointF;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.AsyncTask;
+import android.widget.TextView;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
@@ -37,6 +41,7 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
     private float lookX, lookY, lookZ; //Camera vector
     private float upX, upY, upZ; //Camera orthogonal vector
     private Context thisContext;
+    private TextView date;
 
     public GraphicsRenderer(Context context){
         this.thisContext = context;
@@ -65,7 +70,7 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
         speed = 10;
 
         for (int i = 0; i < N; i++) {
-            planetArray[i] = new Planet(i, sun, scaleFactor);
+            planetArray[i] = new Planet(i, sun, scaleFactor, 5);
             planetBillboardArray[i] = new Billboard(1, 0, 0, 1+i*i);
         }
 
@@ -98,6 +103,7 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
             camZ += camZd;
             cal.add(Calendar.DAY_OF_YEAR, speed);
             currentDate = getJulianCalDay();
+            new UpdateDate().execute(cal);
         }
 
         Matrix.setLookAtM(viewMatrix, 0, camX, camY, camZ, lookX, lookY, lookZ, upX, upY, upZ);
@@ -105,7 +111,7 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
         for (int i = 0; i < N; i++) {
             planetArray[i].calculatePosition(currentDate);
             Billboard curBB = planetBillboardArray[i];
-            curBB.setCoords(planetArray[i]);
+            curBB.setCoords(planetArray[i].currentLocation);
             // Set the billboard to look at the camera
             Matrix.setLookAtM(vectMatrix[i], 0, curBB.getX(), curBB.getY(), curBB.getZ(),
                     camX, camY, camZ, upX, upY, upZ);
@@ -124,6 +130,7 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
 
         //Draw Sun
         // Set the billboard to look at the camera
+        sunBillboard.setCoords(sun);
         Matrix.setLookAtM(vectMatrix[N], 0, sun.x, sun.y, 0,
                 camX, camY, camZ, upX, upY, upZ);
         //Matrix.translateM(mVMatrix[i], 0, coords[i][0], coords[i][1], coords[i][2]);
@@ -170,5 +177,36 @@ public class GraphicsRenderer implements GLSurfaceView.Renderer{
 
     public void setSpeed(int s) {
         speed = s;
+    }
+
+    public void setText(TextView t) {
+        date = t;
+    }
+
+    private class UpdateDate extends AsyncTask<Calendar, Void, String> {
+
+        private SimpleDateFormat formatDate = new SimpleDateFormat("yyyy:MM:dd");
+
+        @Override
+        protected String doInBackground(Calendar... params) {
+            String era;
+            if (cal.get(GregorianCalendar.ERA) == GregorianCalendar.AD) {
+                era = "AD";
+            } else {
+                era = "BC";
+            }
+            formatDate.setCalendar(cal);
+
+            /*formatDate = String.valueOf(cal.get(GregorianCalendar.MONTH) + 1)
+                    + "-" + String.valueOf(cal.get(GregorianCalendar.DAY_OF_MONTH))
+                    + "-" + String.valueOf(cal.get(GregorianCalendar.YEAR) + "-" + era);*/
+            return formatDate.format(cal.getTime());
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            date.setText(s);
+        }
     }
 }
